@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wowza Live Stream</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://vjs.zencdn.net/8.0.4/video-js.css" rel="stylesheet">
+    <script src="https://vjs.zencdn.net/8.0.4/video.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto p-4">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 text-center">Wowza Live Stream Manager</h1>
+            <p class="text-gray-600 text-center">Manage and view live streams in real-time</p>
+        </header>
+
+        <div id="streams" class="space-y-4">
+            <!-- Streams will be dynamically injected here -->
+        </div>
+
+        <!-- Video Player -->
+        <div class="mt-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Live Stream</h2>
+            <video
+                id="live-stream-player"
+                class="video-js vjs-default-skin w-full"
+                controls
+                autoplay
+                data-setup='{}'>
+                <source src="" id="stream-source" type="application/x-mpegURL">
+            </video>
+        </div>
+    </div>
+
+    <script>
+        const eventSource = new EventSource('/sse-streams');
+
+        eventSource.onmessage = function (event) {
+            const streamsContainer = document.getElementById('streams');
+            const streams = JSON.parse(event.data);
+            streamsContainer.innerHTML = '';
+
+            if (streams.length) {
+                streams.forEach(stream => {
+                    streamsContainer.innerHTML += `
+                        <div class="bg-white shadow-md rounded-lg p-4 mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">${stream.name}</h3>
+                            <p class="text-sm text-gray-600">Status: 
+                                <span class="${stream.state === 'started' ? 'text-green-500' : 'text-red-500'}">
+                                    ${stream.state}
+                                </span>
+                            </p>
+                            <button onclick="setStream('${stream.player_hls_playback_url}')"
+                                    class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                Watch Stream
+                            </button>
+                        </div>
+                    `;
+                });
+            } else {
+                streamsContainer.innerHTML = `
+                    <div class="bg-yellow-100 text-yellow-800 p-4 rounded-md">
+                        <p>No streams found. Please create one in Wowza.</p>
+                    </div>
+                `;
+            }
+        };
+
+        function setStream(streamUrl) {
+            const player = document.getElementById('stream-source');
+            player.src = streamUrl;
+            const videoPlayer = document.getElementById('live-stream-player');
+            videoPlayer.load();
+            videoPlayer.play();
+        }
+    </script>
+</body>
+</html>
