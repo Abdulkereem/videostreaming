@@ -1,6 +1,4 @@
-Here is a **README** for your Wowza live stream Flask project:
 
----
 
 # Wowza Live Stream Flask Project
 
